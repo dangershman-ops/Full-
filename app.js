@@ -12,7 +12,7 @@
 
   // Paste the Google Apps Script Web App URL here (see app/GOOGLE_SHEETS_SETUP.md).
   // Leave blank to skip logging — the Send flow still works locally either way.
-  const SHEETS_WEBHOOK_URL = 'https://script.google.com/a/macros/tonal.com/s/AKfycbyILyla38nUnnLoEr9H38CSPXKZXlt4Z4CqiMMvnLQcwpa5ebITRVohQlpZo7_DVNGgRQ/exec';
+  const SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzg5uDJ_HtuLQAO2gcgZpmYyuCJfDqBlxd_P4Wvo7L-cUmd1k7bdPwLsI97wFIuPrkspw/exec';
 
   function logQuoteToSheet(email) {
     if (!SHEETS_WEBHOOK_URL) return;
