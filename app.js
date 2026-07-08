@@ -35,6 +35,12 @@
     { key: 'extended', label: 'Extended', sub: '100+ miles away', price: 495 },
   ];
 
+  const WARRANTY = [
+    { key: 'none', name: 'No extended warranty', price: 0 },
+    { key: 'four', name: '4-Year Warranty', price: 425 },
+    { key: 'five', name: '5-Year Warranty', price: 449 },
+  ];
+
   const H_LABELS = { 1: 'Just me', 2: 'Me & my partner', 3: 'Small family', 4: 'Small family', 5: 'Whole family', 6: 'Whole family' };
 
   const GYM_PP = 65;     // $/mo per person — U.S. Health & Fitness Association
@@ -46,8 +52,11 @@
     trainer: 'tonal2',
     bundle: 'essential',
     shipping: 'standard',
+    warranty: 'none',
     taxPct: 7,
+    discountMode: 'pct',
     discountPct: 0,
+    discountDollar: 0,
     household: 1,
     compareTab: 'membership',
     email: '',
@@ -79,10 +88,18 @@
     const shipObj = SHIP.find((x) => x.key === s.shipping) || SHIP[0];
     const shippingCost = shipObj.price;
 
+    // ---- extended warranty (optional) ----
+    const warrantyObj = WARRANTY.find((w) => w.key === s.warranty) || WARRANTY[0];
+    const warrantyPrice = warrantyObj.price;
+
     // ---- totals ----
+    const discountMode = s.discountMode;
     const discountPct = s.discountPct;
-    const discountAmount = trainerPrice * (discountPct / 100);
-    const subtotal = (trainerPrice - discountAmount) + bundlePrice + shippingCost;
+    const discountDollar = s.discountDollar;
+    const discountAmount = discountMode === 'dollar'
+      ? Math.min(discountDollar, trainerPrice)
+      : trainerPrice * (discountPct / 100);
+    const subtotal = (trainerPrice - discountAmount) + bundlePrice + shippingCost + warrantyPrice;
     const taxPct = s.taxPct;
     const taxAmount = subtotal * (taxPct / 100);
     const allIn = subtotal + taxAmount;
@@ -91,12 +108,14 @@
     const summary = [
       { label: trainerName + ' trainer', value: fmt(trainerPrice) },
     ];
-    if (discountPct > 0) {
-      summary.push({ label: 'Trainer discount (' + discountPct + '%)', value: '-' + fmt(discountAmount) });
+    if (discountAmount > 0) {
+      const discLabel = discountMode === 'dollar' ? 'Trainer discount' : 'Trainer discount (' + discountPct + '%)';
+      summary.push({ label: discLabel, value: '-' + fmt(discountAmount) });
     }
     summary.push(
       { label: bundleObj.name, value: fmt(bundlePrice) },
       { label: shipObj.label + ' shipping & install', value: fmt(shippingCost) },
+      { label: warrantyObj.name, value: fmt(warrantyPrice) },
       { label: 'Sales tax (' + taxPctLabel + '%)', value: fmt(taxAmount) }
     );
 
@@ -141,7 +160,10 @@
       summary,
       taxPct,
       taxPctLabel,
+      discountMode,
       discountPct,
+      discountDollar,
+      trainerPrice,
       switchLabel: isTonal2 ? 'Switch to Tonal 1' : 'Switch to Tonal 2',
 
       household,
@@ -201,6 +223,21 @@
     }).join('');
   }
 
+  function renderWarrantyList() {
+    el('warrantyList').innerHTML = WARRANTY.map((w) => {
+      const on = w.key === state.warranty;
+      return `<button data-action="selectWarranty" data-value="${w.key}" style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:14px 15px;border-radius:14px;background:${on ? 'rgba(81,222,162,.08)' : 'rgba(255,255,255,.015)'};border:1px solid ${on ? 'rgba(81,222,162,.45)' : 'rgba(134,148,138,.18)'}">
+        <span style="display:flex;align-items:center;gap:12px">
+          <span style="flex:none;width:18px;height:18px;border-radius:50%;border:2px solid ${on ? '#51dea2' : 'rgba(134,148,138,.4)'};background:${on ? '#51dea2' : 'transparent'};display:flex;align-items:center;justify-content:center">
+            <span style="width:6px;height:6px;border-radius:50%;background:#051512;opacity:${on ? '1' : '0'}"></span>
+          </span>
+          <span style="font-size:13px;font-weight:700;color:#f1f5f3">${w.name}</span>
+        </span>
+        <span style="font-family:'Big Shoulders Display',sans-serif;font-weight:700;font-size:16px;color:${on ? '#51dea2' : '#bbcabf'}">${fmt(w.price)}</span>
+      </button>`;
+    }).join('');
+  }
+
   function renderSummaryRows(containerId, summary) {
     el(containerId).innerHTML = summary.map((r) => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(134,148,138,.12)">
@@ -244,6 +281,21 @@
       </div>`).join('');
   }
 
+  function syncDiscountModeUI(vals) {
+    const isDollar = vals.discountMode === 'dollar';
+    el('discModePctBtn').style.background = isDollar ? 'transparent' : '#51dea2';
+    el('discModePctBtn').style.color = isDollar ? '#86948a' : '#051512';
+    el('discModeDollarBtn').style.background = isDollar ? '#51dea2' : 'transparent';
+    el('discModeDollarBtn').style.color = isDollar ? '#051512' : '#86948a';
+    el('discountPctSuffix').style.display = isDollar ? 'none' : 'inline';
+    el('discountDollarPrefix').style.display = isDollar ? 'inline' : 'none';
+    const max = isDollar ? vals.trainerPrice : 30;
+    el('discountRange').max = max;
+    el('discountRange').step = isDollar ? 25 : 1;
+    el('discountMinLabel').textContent = isDollar ? '$0' : '0%';
+    el('discountMaxLabel').textContent = isDollar ? fmt(max) : '30%';
+  }
+
   function renderFull() {
     const vals = computeVals();
 
@@ -261,10 +313,12 @@
     el('allInHero').textContent = vals.allInLabel;
     renderBundleList(vals);
     renderShippingList();
-    el('taxPctLabel').textContent = vals.taxPctLabel;
-    if (document.activeElement !== el('taxRange')) el('taxRange').value = vals.taxPct;
-    el('discountPctLabel').textContent = vals.discountPct;
-    if (document.activeElement !== el('discountRange')) el('discountRange').value = vals.discountPct;
+    renderWarrantyList();
+    if (document.activeElement !== el('taxPctInput')) el('taxPctInput').value = vals.taxPctLabel;
+    syncDiscountModeUI(vals);
+    const discountDisplayValue = vals.discountMode === 'dollar' ? vals.discountDollar : vals.discountPct;
+    if (document.activeElement !== el('discountValueInput')) el('discountValueInput').value = discountDisplayValue;
+    if (document.activeElement !== el('discountRange')) el('discountRange').value = discountDisplayValue;
     renderSummaryRows('summaryListPrice', vals.summary);
     el('allInTotalPrice').textContent = vals.allInLabel;
     el('tonal1Compare').style.display = vals.isTonal1 ? 'block' : 'none';
@@ -313,11 +367,13 @@
   }
 
   function updateTaxDependent() {
-    // lightweight patch used while dragging the tax/discount sliders so the
-    // range input nodes are never replaced (would break the in-progress drag)
+    // lightweight patch used while dragging/typing the tax & discount
+    // controls so the focused input node is never replaced mid-edit
     const vals = computeVals();
-    el('taxPctLabel').textContent = vals.taxPctLabel;
-    el('discountPctLabel').textContent = vals.discountPct;
+    if (document.activeElement !== el('taxPctInput')) el('taxPctInput').value = vals.taxPctLabel;
+    const discountDisplayValue = vals.discountMode === 'dollar' ? vals.discountDollar : vals.discountPct;
+    if (document.activeElement !== el('discountValueInput')) el('discountValueInput').value = discountDisplayValue;
+    if (document.activeElement !== el('discountRange')) el('discountRange').value = discountDisplayValue;
     el('allInHero').textContent = vals.allInLabel;
     el('allInTotalPrice').textContent = vals.allInLabel;
     renderSummaryRows('summaryListPrice', vals.summary);
@@ -339,6 +395,9 @@
       case 'switchTrainer': setState({ trainer: state.trainer === 'tonal2' ? 'tonal1' : 'tonal2' }); break;
       case 'selectBundle': setState({ bundle: value }); break;
       case 'selectShipping': setState({ shipping: value }); break;
+      case 'selectWarranty': setState({ warranty: value }); break;
+      case 'setDiscountModePct': setState({ discountMode: 'pct' }); break;
+      case 'setDiscountModeDollar': setState({ discountMode: 'dollar' }); break;
       case 'selectHousehold': setState({ household: parseInt(value, 10) }); break;
       case 'setMembershipTab': setState({ compareTab: 'membership' }); break;
       case 'setHomeGymTab': setState({ compareTab: 'homeGym' }); break;
@@ -355,13 +414,24 @@
     }
   });
 
-  el('taxRange').addEventListener('input', (e) => {
-    state.taxPct = parseFloat(e.target.value);
+  el('taxPctInput').addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    state.taxPct = Math.max(0, isNaN(v) ? 0 : v);
     updateTaxDependent();
   });
 
   el('discountRange').addEventListener('input', (e) => {
-    state.discountPct = parseFloat(e.target.value);
+    const v = parseFloat(e.target.value) || 0;
+    if (state.discountMode === 'dollar') state.discountDollar = v;
+    else state.discountPct = v;
+    updateTaxDependent();
+  });
+
+  el('discountValueInput').addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    const clean = Math.max(0, isNaN(v) ? 0 : v);
+    if (state.discountMode === 'dollar') state.discountDollar = clean;
+    else state.discountPct = clean;
     updateTaxDependent();
   });
 
