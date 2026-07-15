@@ -11,23 +11,23 @@
   };
 
   // Paste the Google Apps Script Web App URL here (see app/GOOGLE_SHEETS_SETUP.md).
-  // Leave blank to skip logging — the Send flow still works locally either way.
+  // Leave blank to skip logging; the Send flow still works locally either way.
   const SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzg5uDJ_HtuLQAO2gcgZpmYyuCJfDqBlxd_P4Wvo7L-cUmd1k7bdPwLsI97wFIuPrkspw/exec';
 
-  function logQuoteToSheet(contactMethod, contactValue, quoteLines, totalPrice) {
+  function logQuoteToSheet(contactMethod, contactValue, store, quoteLines, totalPrice) {
     if (!SHEETS_WEBHOOK_URL) return;
     fetch(SHEETS_WEBHOOK_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ contactMethod, contactValue, quoteLines, totalPrice, timestamp: new Date().toISOString() }),
+      body: JSON.stringify({ contactMethod, contactValue, store, quoteLines, totalPrice, timestamp: new Date().toISOString() }),
     }).catch((err) => console.warn('Sheet logging failed:', err));
   }
 
   const BUNDLES = [
-    { key: 'none', name: 'No accessories', price: 0, count: 'Trainer only', movements: 'Just the trainer — add Smart Accessories anytime later' },
-    { key: 'essential', name: 'Essential Accessories', price: CONFIG.essentialPrice, count: '7 accessories included', movements: 'Unlocks 285+ movements — upper, lower & core' },
-    { key: 'ultimate', name: 'Ultimate Accessories', price: CONFIG.ultimatePrice, count: '9 accessories included', movements: 'Adds Pilates loops & ankle strap — 320+ exercises' },
+    { key: 'none', name: 'No accessories', price: 0, count: 'Trainer only', movements: 'Just the trainer, add Smart Accessories anytime later' },
+    { key: 'essential', name: 'Essential Accessories', price: CONFIG.essentialPrice, count: '7 accessories included', movements: 'Unlocks 285+ movements: upper, lower & core' },
+    { key: 'ultimate', name: 'Ultimate Accessories', price: CONFIG.ultimatePrice, count: '9 accessories included', movements: 'Adds Pilates loops & ankle strap, 320+ exercises' },
   ];
 
   const SHIP = [
@@ -48,9 +48,9 @@
 
   const H_LABELS = { 1: 'Just me', 2: 'Me & my partner', 3: 'Small family', 4: 'Small family', 5: 'Whole family', 6: 'Whole family' };
 
-  const GYM_PP = 65;     // $/mo per person — U.S. Health & Fitness Association
-  const SESS_RATE = 65;  // $/hr — NESTA certified
-  const HOME_GYM_HIGH = 25000; // top of $7K–$25K range — RitFit
+  const GYM_PP = 65;     // $/mo per person, U.S. Health & Fitness Association
+  const SESS_RATE = 65;  // $/hr, NESTA certified
+  const HOME_GYM_HIGH = 25000; // top of $7K-$25K range, RitFit
 
   const state = {
     step: 0,
@@ -69,6 +69,7 @@
     compareTab: 'membership',
     contactMethod: 'email',
     contactValue: '',
+    store: '',
     sent: false,
   };
 
@@ -150,8 +151,8 @@
     const memDiff = gymMo - tonalMo;
     const memSavesPositive = memDiff >= 0;
     const memSavesCopy = memSavesPositive
-      ? 'less/mo than ' + N + ' gym membership' + (N > 1 ? 's' : '') + ' — and Tonal never goes up as the family grows.'
-      : 'more/mo than a single gym membership — but your whole household trains for the same flat price. Add one person and Tonal already wins.';
+      ? 'less/mo than ' + N + ' gym membership' + (N > 1 ? 's' : '') + ', and Tonal never goes up as the family grows.'
+      : 'more/mo than a single gym membership, but your whole household trains for the same flat price. Add one person and Tonal already wins.';
 
     // ---- compare: home gym sticker ----
     const tonalBarPct = Math.max(6, Math.round((allIn / HOME_GYM_HIGH) * 100));
@@ -164,23 +165,28 @@
       ? contactValue.replace(/\D/g, '').length >= 10
       : /.+@.+\..+/.test(contactValue.trim());
 
+    // ---- store ----
+    const store = s.store;
+    const storeValid = !!store;
+
     // ---- rent pricing ----
     const rentInfo = RENT[s.trainer];
 
-    // ---- compare: rent vs personal training ----
+    // ---- compare: rent vs personal training (2x/week) ----
     const rentMo = rentInfo.promo;
-    const rentVsTrainerMax = Math.max(rentMo, trainerMo);
+    const rentTrainerMo = SESS_RATE * 8 * N;
+    const rentVsTrainerMax = Math.max(rentMo, rentTrainerMo);
     const rentBarPct = (v) => Math.max(7, Math.round((v / rentVsTrainerMax) * 100));
     const rentCompareColumns = [
       { label: 'Rent ' + trainerName, sub: 'First 3 months · membership included', note: '', valueLabel: fmt(rentMo) + '/mo', valColor: '#51dea2', barPct: rentBarPct(rentMo), barBg: 'linear-gradient(180deg,#71fbbd,#26bf86)', barGlow: '0 0 28px rgba(81,222,162,.4)' },
-      { label: 'Personal Trainer', sub: '$65/hr · 4 sessions/mo', note: 'according to NESTA certified', valueLabel: fmt(trainerMo) + '/mo', valColor: '#e88a8e', barPct: rentBarPct(trainerMo), barBg: 'linear-gradient(180deg,#c54e53,#7e2f33)', barGlow: 'none' },
+      { label: 'Personal Trainer', sub: '$65/hr · 2x/week', note: 'according to NESTA certified', valueLabel: fmt(rentTrainerMo) + '/mo', valColor: '#e88a8e', barPct: rentBarPct(rentTrainerMo), barBg: 'linear-gradient(180deg,#c54e53,#7e2f33)', barGlow: 'none' },
     ];
-    const rentTrainerDiff = trainerMo - rentMo;
+    const rentTrainerDiff = rentTrainerMo - rentMo;
     const rentSavesPositive = rentTrainerDiff >= 0;
     const rentSavesLabel = '$' + Math.round(Math.abs(rentTrainerDiff));
     const rentSavesCopy = rentSavesPositive
-      ? 'less/mo than a personal trainer — and you keep unlimited access at home, every day.'
-      : 'more/mo than a personal trainer for the first 3 months — but you get unlimited training, every day, at home.';
+      ? 'less/mo than a personal trainer, and you keep unlimited access at home, every day.'
+      : 'more/mo than a personal trainer for the first 3 months, but you get unlimited training, every day, at home.';
 
     return {
       step: s.step,
@@ -232,6 +238,8 @@
       contactMethod,
       contactValue,
       contactValid,
+      store,
+      storeValid,
     };
   }
 
@@ -450,6 +458,8 @@
     input.placeholder = isEmail ? 'name@email.com' : '(555) 555-5555';
     input.inputMode = isEmail ? 'email' : 'tel';
     if (document.activeElement !== input) input.value = vals.contactValue;
+    const storeSelect = el('storeSelect');
+    if (document.activeElement !== storeSelect) storeSelect.value = vals.store;
     updateContactDependent(vals);
 
     el('notSentPanel').style.display = state.sent ? 'none' : 'flex';
@@ -460,10 +470,11 @@
 
   function updateContactDependent(vals) {
     el('emailWrap').style.border = '1px solid ' + (vals.contactValid ? 'rgba(81,222,162,.4)' : 'rgba(134,148,138,.2)');
+    const canSend = vals.contactValid && vals.storeValid;
     const btn = el('sendBtn');
-    btn.disabled = !vals.contactValid;
-    btn.style.background = vals.contactValid ? '#51dea2' : '#2b3a33';
-    btn.style.opacity = vals.contactValid ? '1' : '0.5';
+    btn.disabled = !canSend;
+    btn.style.background = canSend ? '#51dea2' : '#2b3a33';
+    btn.style.opacity = canSend ? '1' : '0.5';
   }
 
   function updateTaxDependent() {
@@ -509,14 +520,18 @@
       case 'setContactMethodText': setState({ contactMethod: 'text' }); break;
       case 'sendQuote': {
         const vals = computeVals();
-        if (vals.contactValid) {
+        if (vals.contactValid && vals.storeValid) {
           const quoteLines = vals.summary.map((r) => r.label + ': ' + r.value).join(' + ');
-          logQuoteToSheet(vals.contactMethod, vals.contactValue.trim(), quoteLines, vals.allInLabel);
+          logQuoteToSheet(vals.contactMethod, vals.contactValue.trim(), vals.store, quoteLines, vals.allInLabel);
           setState({ sent: true });
         }
         break;
       }
-      case 'restart': setState({ step: 0, sent: false, contactValue: '' }); el('emailInput').value = ''; break;
+      case 'restart':
+        setState({ step: 0, sent: false, contactValue: '', store: '' });
+        el('emailInput').value = '';
+        el('storeSelect').value = '';
+        break;
     }
   });
 
@@ -543,6 +558,11 @@
 
   el('emailInput').addEventListener('input', (e) => {
     state.contactValue = e.target.value;
+    updateContactDependent(computeVals());
+  });
+
+  el('storeSelect').addEventListener('change', (e) => {
+    state.store = e.target.value;
     updateContactDependent(computeVals());
   });
 
