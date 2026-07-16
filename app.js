@@ -51,6 +51,8 @@
   const GYM_PP = 65;     // $/mo per person, U.S. Health & Fitness Association
   const SESS_RATE = 65;  // $/hr, NESTA certified
   const HOME_GYM_HIGH = 25000; // top of $7K-$25K range, RitFit
+  const AVG_SALES_TAX_PCT = 6.66; // simple average of combined state+local rate, all 50 states, Tax Foundation Jan 2026 data
+  const INFO_PAGE_IDS = ['accessoriesPage', 'warrantyPage', 'installationPage'];
 
   const state = {
     step: 0,
@@ -60,7 +62,7 @@
     shipping: 'standard',
     warranty: 'none',
     warrantyOpen: false,
-    taxPct: 7,
+    taxPct: AVG_SALES_TAX_PCT,
     discountMode: 'pct',
     discountPct: 0,
     discountDollar: 0,
@@ -126,6 +128,7 @@
       { label: bundleObj.name, value: fmt(bundlePrice) },
       { label: shipObj.label + ' shipping & install', value: fmt(shippingCost) },
       { label: warrantyObj.name, value: fmt(warrantyPrice) },
+      { label: 'Subtotal', value: fmt(subtotal) },
       { label: 'Sales tax (' + taxPctLabel + '%)', value: fmt(taxAmount) }
     );
 
@@ -518,6 +521,13 @@
       case 'setHomeGymTab': setState({ compareTab: 'homeGym' }); break;
       case 'setContactMethodEmail': setState({ contactMethod: 'email' }); break;
       case 'setContactMethodText': setState({ contactMethod: 'text' }); break;
+      case 'openInfoPage':
+        INFO_PAGE_IDS.forEach((id) => { el(id).style.display = 'none'; });
+        el(value + 'Page').style.display = 'block';
+        break;
+      case 'closeInfoPage':
+        INFO_PAGE_IDS.forEach((id) => { el(id).style.display = 'none'; });
+        break;
       case 'sendQuote': {
         const vals = computeVals();
         if (vals.contactValid && vals.storeValid) {
