@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tonal — Sales Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script data-goatcounter="https://dang.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(ellipse 90% 55% at 12% -8%,rgba(81,222,162,0.16) 0%,transparent 55%),radial-gradient(ellipse 65% 45% at 88% 2%,rgba(81,222,162,0.10) 0%,transparent 50%),#0a0f12;background-attachment:fixed;font-family:'Inter',system-ui,sans-serif;color:#dfe3e7;-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:28px}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.card{display:block;text-align:left;background:linear-gradient(155deg,rgba(23,28,31,.92),rgba(15,20,23,.94));border:1px solid rgba(134,148,138,.16);border-radius:22px;padding:26px 24px;text-decoration:none;color:inherit;transition:border-color .15s,transform .1s,background .15s;position:relative;overflow:hidden}
+.card:hover{border-color:rgba(81,222,162,.5);background:rgba(81,222,162,.06);transform:translateY(-2px)}
+.card:active{transform:translateY(0)}
+.glow{position:absolute;top:-60px;right:-60px;width:170px;height:170px;background:radial-gradient(circle,rgba(81,222,162,.14),transparent 70%);pointer-events:none}
+</style>
+</head>
+<body>
+<div style="width:100%;max-width:520px;animation:fadeSlideIn .5s cubic-bezier(.2,.8,.2,1)">
+  <div style="text-align:center;margin-bottom:30px">
+    <div style="font-family:'Big Shoulders Display',sans-serif;font-weight:900;font-size:22px;letter-spacing:.32em;color:#51dea2;text-transform:uppercase">Tonal</div>
+    <h1 style="font-family:'Big Shoulders Display',sans-serif;font-weight:900;font-size:40px;line-height:1;color:#dfe3e7;margin:14px 0 0">Sales Tools</h1>
+    <p style="font-size:13.5px;color:#86948a;margin:12px 0 0;line-height:1.5">Choose a tool to get started.</p>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <a class="card" href="pricing.html">
+      <div class="glow"></div>
+      <span style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#71fbbd">Build a quote</span>
+      <div style="font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:27px;color:#f1f5f3;margin:8px 0 6px">Pricing Companion</div>
+      <p style="font-size:13px;color:#bbcabf;line-height:1.55;margin:0">Buy or rent pricing, accessories, warranty, tax by state, and a shareable all-in quote.</p>
+      <span style="display:inline-block;margin-top:14px;font-size:12.5px;font-weight:700;color:#51dea2">Open Pricing Companion →</span>
+    </a>
+
+    <a class="card" href="profiles.html">
+      <div class="glow"></div>
+      <span style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#71fbbd">Find the fit</span>
+      <div style="font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:27px;color:#f1f5f3;margin:8px 0 6px">Targeted Profiles</div>
+      <p style="font-size:13px;color:#bbcabf;line-height:1.55;margin:0">Pick a customer profile to see why Tonal fits their goals, plus a recommended program.</p>
+      <span style="display:inline-block;margin-top:14px;font-size:12.5px;font-weight:700;color:#51dea2">Explore Profiles →</span>
+    </a>
+  </div>
+</div>
+</body>
+</html>
