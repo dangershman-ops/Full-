@@ -270,6 +270,7 @@
       isTonal2,
       isTonal1: !isTonal2,
       allInLabel: fmt(allIn),
+      subtotal,
       subtotalLabel: fmt(subtotal),
       isRent,
       sendSummary,
@@ -485,6 +486,8 @@
     renderSummaryRows('summaryListPrice', vals.summary);
     el('allInTotalPrice').textContent = vals.allInLabel;
     el('tonal1Compare').style.display = vals.isTonal1 ? 'block' : 'none';
+    const financingLink = document.getElementById('financingLink');
+    if (financingLink) financingLink.href = 'financing.html?amount=' + Math.round(vals.subtotal);
 
     // ---- compare screen: buy vs rent view ----
     el('compareBuyView').style.display = vals.purchaseMode === 'rent' ? 'none' : 'flex';
