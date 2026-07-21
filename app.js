@@ -171,6 +171,7 @@
       ? Math.min(discountDollar, trainerPrice)
       : trainerPrice * (discountPct / 100));
     const subtotal = (trainerPrice - discountAmount) + bundlePrice + shippingCost + warrantyPrice;
+    const subtotalNoShipping = (trainerPrice - discountAmount) + bundlePrice + warrantyPrice;
     const taxPct = s.taxPct;
     const taxAmount = subtotal * (taxPct / 100);
     const allIn = subtotal + taxAmount;
@@ -262,7 +263,7 @@
     const recapValue = isRent ? fmt(rentInfo.promo) + '/mo' : fmt(allIn);
     const logValue = isRent
       ? fmt(rentInfo.promo) + '/mo (first 3 months, then ' + fmt(rentInfo.regular) + '/mo)'
-      : fmt(subtotal);
+      : fmt(subtotalNoShipping);
 
     return {
       step: s.step,
